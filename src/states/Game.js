@@ -64,6 +64,7 @@ export default class extends Phaser.State {
     this.bullets.setAll('anchor.y', 1);
     this.bullets.setAll('outOfBoundsKill', true);
     this.bullets.setAll('checkWorldBounds', true);
+    
     /*
      * Enemy
      */
@@ -126,7 +127,9 @@ export default class extends Phaser.State {
     base_turret.anchor.setTo(0.5);
     this.towers.add(base_turret);
 
-    var turret = new Turret(this.game, 483, 484, 'cannon_1', this.enemys, .5, () => { console.log('fire!')});
+    var turret = new Turret(this.game, 483, 484, 'cannon_1', this.enemys, this.bullets, .5);
+    var subscription = turret.turret_events.subscribe(Turret.ON_FIRE, (t) => {console.log('on fire: ', t)});
+    
     this.game.add.existing(turret);
     this.towers.add(turret);
     turret.inputEnabled=true;
@@ -134,12 +137,11 @@ export default class extends Phaser.State {
     turret.events.onInputOut.add((go, p) => { this.handleTowerMouseOut(go, p) }, this.game);    
     turret.events.onInputUp.add((go, p) => { this.game.selection.x = go.x; this.game.selection.y = go.y; this.game.selection.visible = true; go.selected = true; }, this.game);
 
-    
 
     base_turret = this.game.add.sprite(659, 660, 'base-turret');
     base_turret.anchor.setTo(0.5);
     this.towers.add(base_turret);
-    turret = new Turret(this.game, 659, 660, 'cannon_1', this.enemys);
+    turret = new Turret(this.game, 659, 660, 'cannon_1', this.enemys, this.bullets, .5);
     this.game.add.existing(turret);
     this.towers.add(turret);
     
@@ -147,14 +149,9 @@ export default class extends Phaser.State {
     turret.events.onInputOver.add((go, p) => { this.game.highlight.x = go.x; this.game.highlight.y = go.y; this.game.highlight.visible = true; }, this.game);
     turret.events.onInputOut.add((go, p) => { this.game.highlight.visible = false; }, this.game);    
 
-    turret = new Turret(this.game, 923, 660, 'cannon_1', this.enemys);
+    turret = new Turret(this.game, 923, 660, 'cannon_1', this.enemys, this.bullets, .5);
     this.game.add.existing(turret);
     this.towers.add(turret);
-    
-    // turret.inputEnabled=true;
-    // turret.events.onInputOver.add((go, p) => { console.log('go: ', go); }, this.game);
-
-
     
     this.game.world.setBounds(0, 0, 1320, 1320);
 
@@ -179,8 +176,16 @@ export default class extends Phaser.State {
     return bmd
   }  
   
+  collisionHandler(bullet, enemy) {
+    bullet.kill();
+    enemy.destroy();
+  }
+  
   update () {
     
+    
+    //  Run collision
+    this.game.physics.arcade.overlap(this.bullets, this.enemys, (bullet, enemy) => this.collisionHandler(bullet, enemy), null, this);
     // this.fc = this.fc + 1;
     
     // var closest = this.enemys.getClosestTo(this.turret, function(e) { return e.alive; }, this);

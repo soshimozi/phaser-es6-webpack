@@ -49,6 +49,8 @@ export default class extends Phaser.State {
     this.game.load.spritesheet('bullet_impact', require('../images/Effects/Bullet_Impact_32x16.png'), 16, 16);
     
     this.game.load.image('base-turret', require('../images/Turrets/Base1_96x96.png'));
+    
+    this.game.load.image('bullet', require('../images/Effects/Bullet2_18x12.png'));
   }
   
   configureLoadingImage() {

@@ -1,20 +1,29 @@
-import Phaser from 'phaser'
+import Phaser from 'phaser';
+import events from '../utils/events.js';
 
-export default class extends Phaser.Sprite {
-    constructor(game, x, y, asset, enemies, fire_freq, on_fire) {
-        super(game, x, y, asset)
-        this.anchor.setTo(0.5)
-        this.enemies = enemies
+
+const on_fire = 'on_fire';
+      
+export default class Turret extends Phaser.Sprite {
+    constructor(game, x, y, asset, enemies, bullets, fire_freq) {
+        super(game, x, y, asset);
+        this.anchor.setTo(0.5);
+        this.enemies = enemies;
+        this.bullets = bullets;
         
         if( fire_freq )
-            this.fire_rate = 1 / fire_freq
+            this.fire_rate = 1 / fire_freq;
         else
             this.fire_rate = 0;
             
-        this.on_fire = on_fire
-        this.can_fire = true && this.fire_rate // only fire if we have an actual frequency
-        
-        console.log('fire_rate: ', fire_freq);
+        this.can_fire = true && this.fire_rate; // only fire if we have an actual frequency
+
+        this.turret_events = new events();
+
+    }
+    
+    static get ON_FIRE() {
+        return on_fire;
     }
     
     setTarget(tgt) {
@@ -24,7 +33,7 @@ export default class extends Phaser.Sprite {
     update() {
         
         if(!this.selected) {
-            this.trackTarget()
+            this.trackTarget();
         } else {
             this.trackPointer();
         }
@@ -75,12 +84,20 @@ export default class extends Phaser.Sprite {
           
           if(this.can_fire) {
               
-            if(typeof this.on_fire === 'function') {
-                this.on_fire(this);
-            }
-              
+            // let listeners know we can fire
+            console.log('about to publish event', Turret.ON_FIRE);
+            
+            this.turret_events.publish(Turret.ON_FIRE, this);
+            
+            var bullet = this.bullets.getFirstExists(false);
+            if (bullet) {
+                bullet.reset(this.x, this.y);
+                bullet.body.collideWorldBounds = true;
+                bullet.rotation = parseFloat(this.game.physics.arcade.angleToXY(bullet, target.x, target.y)) * 180 / Math.PI;
+                this.game.physics.arcade.moveToObject(bullet, target, 500);
+            }            
+
             this.can_fire = false;
-              
             this.game.time.events.add(Phaser.Timer.SECOND * this.fire_rate, () => { this.can_fire = true }, this);
               
           }
